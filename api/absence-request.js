@@ -9,6 +9,7 @@ var pg = require('pg');
 var format = require('pg-format');
 const pool_postgres = new pg.Pool(_global.db_postgres);
 var fs = require('fs');
+var count = require('word-count');
 router.post('/by-student', function(req, res, next) {
     if (req.body.id == undefined || req.body.id == 0) {
         _global.sendError(res, null, "student Id is required");
@@ -263,7 +264,7 @@ router.post('/create', function(req, res, next) {
         return;
     }
     if(count(req.body.reason) < 15){
-      _global.sendError(res, null, "at least 15 words");
+      _global.sendError(res, null, "at least 15 words in content");
       return;
     }
     var reason = req.body.reason;
