@@ -79,7 +79,7 @@ export {NotificationService};
     TabsModule,
     QRCodeModule,
     LocalStorageModule.withConfig({
-            prefix: 'd3qdiqvkhud343',
+            prefix: 'qldd',
             storageType: 'localStorage'
         }),
     FileUploadModule,
