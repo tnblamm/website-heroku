@@ -79,7 +79,7 @@ export {NotificationService};
     TabsModule,
     QRCodeModule,
     LocalStorageModule.withConfig({
-            prefix: 'qldd',
+            prefix: 'iteccyle8',
             storageType: 'localStorage'
         }),
     FileUploadModule,
@@ -114,7 +114,7 @@ export {NotificationService};
     QRCodeComponent,
     QuizDisplayComponent,
     TranslateModule
-  ],  
+  ],
   providers: [
     AppService,
     CourseService,
