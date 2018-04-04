@@ -7,6 +7,8 @@ var connection = mysql.createConnection(_global.db);
 var pool = mysql.createPool(_global.db);
 var jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
 var bcrypt = require('bcrypt');
+var new_student = [];
+var async = require("async");
 var nodemailer = require('nodemailer');
 var pg = require('pg');
 var format = require('pg-format');
@@ -78,46 +80,38 @@ router.post('/list', function(req, res, next) {
 });
 
 router.post('/add', function(req, res, next) {
-    if (req.body.program_id == undefined || req.body.program_id == 0) {
-        _global.sendError(res, null, "Program is required");
-        return;
-    }
-    if (req.body.class_id == undefined || req.body.class_id == 0) {
-        _global.sendError(res, null, "Class is required");
-        return;
-    }
-    if (req.body.code == undefined || req.body.code == '') {
-        _global.sendError(res, null, "Student code is required");
-        return;
-    }
-    if (req.body.first_name == undefined || req.body.first_name == '') {
-        _global.sendError(res, null, "First name is required");
-        return;
-    }
-    if (req.body.last_name == undefined || req.body.last_name == '') {
-        _global.sendError(res, null, "Last name is required");
-        return;
-    }
-    if (req.body.email == undefined || req.body.email == '') {
-        _global.sendError(res, null, "Email is required");
-        return;
-    }
-    if (req.body.email.indexOf('@') == -1) {
-        _global.sendError(res, null, "Invalid Email");
-        return;
-    }
-    if (req.body.phone == undefined || isNaN(req.body.phone)) {
-        _global.sendError(res, null, "Invalid Phone Number");
-        return;
-    }
-    var new_class_id = req.body.class_id;
-    var new_program_id = req.body.program_id;
-    var new_code = req.body.code;
-    var new_first_name = req.body.first_name;
-    var new_last_name = req.body.last_name;
-    var new_email = req.body.email;
-    var new_phone = req.body.phone;
-    var new_note = req.body.note;
+  if (req.body.program_id == undefined || req.body.program_id == 0) {
+      _global.sendError(res, null, "Program is required");
+      return;
+  }
+  if (req.body.class_id == undefined || req.body.class_id == 0) {
+      _global.sendError(res, null, "Class is required");
+      return;
+  }
+  if (req.body.code == undefined || req.body.code == '') {
+      _global.sendError(res, null, "Student code is required");
+      return;
+  }
+  if (req.body.first_name == undefined || req.body.first_name == '') {
+      _global.sendError(res, null, "First name is required");
+      return;
+  }
+  if (req.body.last_name == undefined || req.body.last_name == '') {
+      _global.sendError(res, null, "Last name is required");
+      return;
+  }
+  if (req.body.phone == undefined || isNaN(req.body.phone)) {
+      _global.sendError(res, null, "Invalid Phone Number");
+      return;
+  }
+  var new_class_id = req.body.class_id;
+  var new_program_id = req.body.program_id;
+  var new_code = req.body.code;
+  var new_first_name = req.body.first_name;
+  var new_last_name = req.body.last_name;
+  var new_email = req.body.email;
+  var new_phone = req.body.phone;
+  var new_note = req.body.note;
     pool_postgres.connect(function(error, connection, done) {
         if (error) {
             _global.sendError(res, error.message);
@@ -125,99 +119,61 @@ router.post('/add', function(req, res, next) {
             return console.log(error);
         }
 
-        connection.query(format(`SELECT stud_id FROM students WHERE stud_id = %L LIMIT 1`, new_code), function(error, result, fields) {
+          connection.query(format(`SELECT stud_id FROM students WHERE stud_id = %L LIMIT 1`, new_code), function(error, result, fields) {
             if (error) {
                 _global.sendError(res, error.message);
                 done();
                 return console.log(error);
             }
-            //check email exist
+            //check code exist
             if (result.rowCount > 0) {
                 _global.sendError(res, null, "Student code already existed");
                 done();
                 return console.log("Student code already existed");
             }
-            connection.query(format(`SELECT email FROM users WHERE email = %L LIMIT 1`, new_email), function(error, result, fields) {
+            //new teacher data
+            var new_password = new_email.split('@')[0];
+            var new_user = [[
+                new_first_name,
+                new_last_name,
+                new_email,
+                new_phone,
+                bcrypt.hashSync(new_password, 10),
+                _global.role.student
+            ]];
+            //begin adding teacher
+            connection.query('BEGIN', function(error) {
                 if (error) {
                     _global.sendError(res, error.message);
                     done();
                     return console.log(error);
                 }
-                //check email exist
-                if (result.rowCount > 0) {
-                    _global.sendError(res, "Email already existed");
-                    done();
-                    return console.log("Email already existed");
-                }
-                //new data to users table
-                var new_password = new_email.split('@')[0];
-                var new_user = [[
-                    new_first_name,
-                    new_last_name,
-                    new_email,
-                    new_phone,
-                    _global.role.student
-                ]];
-                var new_student = [];
-                async.series([
-                    //Start transaction
-                    function(callback) {
-                        connection.query('BEGIN', (error) => {
-                            if (error) callback(error);
-                            else callback();
-                        });
-                    },
-                    //add data to user table
-                    function(callback) {
-                        connection.query(format('INSERT INTO users (first_name,last_name,email,phone,role_id) VALUES %L RETURNING id', new_user), function(error, result, fields) {
-                            if (error) {
-                                callback(error);
-                            }else{
-                                new_student = [[
-                                    result.rows[0].id,
-                                    new_code,
-                                    new_class_id,
-                                    new_note
-                                ]];
-                                callback();
-                            }
-                        });
-                    },
-                    //insert student
-                    function(callback) {
-                        connection.query(format('INSERT INTO students (id,stud_id,class_id,note) VALUES %L', new_student), function(error, result, fields) {
-                            if (error) {
-                                callback(error);
-                            }else{
-                                callback();
-                            }
-                        });
-                    },
-                    //Commit transaction
-                    function(callback) {
-                        connection.query('COMMIT', (error) => {
-                            if (error) callback(error);
-                            else callback();
-                        });
-                    },
-                ], function(error) {
+                //add data to user table
+                connection.query(format('INSERT INTO users (first_name,last_name,email,phone,password,role_id) VALUES %L', new_user), function(error, result, fields) {
                     if (error) {
-                        _global.sendError(res, error.message);
-                        connection.query('ROLLBACK', (error) => {
-                            if (error) return console.log(error);
+                        _global.sendError(res.error.message);
+                        return connection.query('ROLLBACK', function(error) {
+                            done();
+                            return console.log(error);
                         });
-                        done();
-                        return console.log(error);
-                    } else {
+                    }
+                    connection.query('COMMIT', function(error) {
+                        if (error) {
+                            _global.sendError(res.error.message);
+                            return connection.query('ROLLBACK', function(error) {
+                                done();
+                                return console.log(error);
+                            });
+                        }
                         var token = jwt.sign({ email: new_email }, _global.jwt_secret_key, { expiresIn: _global.jwt_register_expire_time });
                         var link = _global.host + '/register;token=' + token;
                         _global.sendMail(
                             '"Giáo vụ"',
                             new_email,
                             'Register your account',
-                            'Hi,'+ new_first_name + '\r\n' + 
+                            'Hi,'+ new_first_name + '\r\n' +
                             'Your account has been created.To setup your account for the first time, please go to the following web address: \r\n\r\n' +
-                            link + 
+                            link +
                             '\r\n(This link is valid for 7 days from the time you received this email)\r\n\r\n' +
                             'If you need help, please contact the site administrator,\r\n' +
                             'Admin User \r\n\r\n' +
@@ -226,7 +182,7 @@ router.post('/add', function(req, res, next) {
                         console.log('success adding student!');
                         res.send({ result: 'success', message: 'Student Added Successfully' });
                         done();
-                    }
+                    });
                 });
             });
         });
@@ -241,8 +197,8 @@ router.get('/detail/:id', function(req, res, next) {
             done();
             return console.log("Can't connect to database");
         }
-        connection.query(format(`SELECT users.*,students.stud_id AS code, students.status,classes.id AS class_id ,classes.name AS class_name 
-            FROM users,students,classes 
+        connection.query(format(`SELECT users.*,students.stud_id AS code, students.status,classes.id AS class_id ,classes.name AS class_name
+            FROM users,students,classes
             WHERE users.id = %L AND users.id = students.id AND students.class_id = classes.id  LIMIT 1`, id), function(error, result, fields) {
             if (error) {
                 _global.sendError(res, error.message);
@@ -252,13 +208,13 @@ router.get('/detail/:id', function(req, res, next) {
             var student = result.rows[0];
             connection.query(format(`SELECT courses.id, code, name, attendance_status, enrollment_status,
                                 (SELECT array_to_string(array_agg(CONCAT(users.first_name,' ',users.last_name)), E'\r\n')
-                                FROM teacher_teach_course,users 
-                                WHERE users.id = teacher_teach_course.teacher_id AND 
-                                    courses.id = teacher_teach_course.course_id AND 
+                                FROM teacher_teach_course,users
+                                WHERE users.id = teacher_teach_course.teacher_id AND
+                                    courses.id = teacher_teach_course.course_id AND
                                     teacher_teach_course.teacher_role = 0) as lecturers,
-                                (SELECT COUNT(attendance_detail.attendance_id) 
-                                FROM attendance,attendance_detail 
-                                WHERE attendance_detail.student_id = student_enroll_course.student_id AND attendance_detail.attendance_type = 0 AND attendance.course_id = courses.id AND attendance.id = attendance_detail.attendance_id ) as absence_count 
+                                (SELECT COUNT(attendance_detail.attendance_id)
+                                FROM attendance,attendance_detail
+                                WHERE attendance_detail.student_id = student_enroll_course.student_id AND attendance_detail.attendance_type = 0 AND attendance.course_id = courses.id AND attendance.id = attendance_detail.attendance_id ) as absence_count
                 FROM student_enroll_course,courses,class_has_course
                 WHERE student_enroll_course.class_has_course_id = class_has_course.id AND class_has_course.course_id = courses.id AND student_enroll_course.student_id = %L`, id), function(error, result, fields) {
                 if (error) {
@@ -519,9 +475,9 @@ router.post('/import', function(req, res, next) {
                         '"Giáo vụ"',
                         student.email,
                          'Register your account',
-                        'Hi,'+ student.name + '\r\n' + 
+                        'Hi,'+ student.name + '\r\n' +
                             'Your account has been created.To setup your account for the first time, please go to the following web address: \r\n\r\n' +
-                            link + 
+                            link +
                             '\r\n(This link is valid for 7 days from the time you received this email)\r\n\r\n' +
                             'If you need help, please contact the site administrator,\r\n' +
                             'Admin User \r\n\r\n' +
@@ -637,9 +593,9 @@ router.post('/export-examinees', function(req, res, next) {
             function(callback) {
                 async.each(class_has_course_ids, function(class_has_course_id, callback) {
                     connection.query(format(`SELECT student_enroll_course.*,users.last_name,users.first_name, students.stud_id as student_code, students.id,
-                                    class_has_course.class_id, class_has_course.course_id, class_has_course.attendance_count 
-                        FROM student_enroll_course,users, students, class_has_course 
-                        WHERE class_has_course.id = class_has_course_id AND users.id = student_enroll_course.student_id AND users.id = students.id AND class_has_course_id = %L 
+                                    class_has_course.class_id, class_has_course.course_id, class_has_course.attendance_count
+                        FROM student_enroll_course,users, students, class_has_course
+                        WHERE class_has_course.id = class_has_course_id AND users.id = student_enroll_course.student_id AND users.id = students.id AND class_has_course_id = %L
                         ORDER BY students.stud_id`, class_has_course_id), function(error, result, fields) {
                         if (error) {
                             console.log(error.message + ' at get student by class_has_course');
@@ -669,8 +625,8 @@ router.post('/export-examinees', function(req, res, next) {
                         } else {
                             //Sinh viên ko được miễn điểm danh
                             //count absences and total attendance
-                            connection.query(format(`SELECT COUNT(*) as count, attendance_type FROM attendance,attendance_detail 
-                                WHERE attendance.closed = TRUE AND id = attendance_id AND student_id = %L AND course_id = %L AND class_id = %L 
+                            connection.query(format(`SELECT COUNT(*) as count, attendance_type FROM attendance,attendance_detail
+                                WHERE attendance.closed = TRUE AND id = attendance_id AND student_id = %L AND course_id = %L AND class_id = %L
                                 GROUP BY attendance_type`, student.id, student.course_id, student.class_id), function(error, result, fields) {
                                 if (error) {
                                     console.log(error.message + ' at count attendance_details');
@@ -756,9 +712,9 @@ router.post('/export-attendance-summary', function(req, res, next) {
             function(callback) {
                 async.each(class_has_course_ids, function(class_has_course_id, callback) {
                     connection.query(format(`SELECT student_enroll_course.*,users.last_name,users.first_name, students.stud_id as student_code, students.id,
-                                    class_has_course.class_id, class_has_course.course_id, class_has_course.attendance_count 
-                        FROM student_enroll_course,users, students, class_has_course 
-                        WHERE class_has_course.id = class_has_course_id AND users.id = student_enroll_course.student_id AND users.id = students.id AND class_has_course_id = %L 
+                                    class_has_course.class_id, class_has_course.course_id, class_has_course.attendance_count
+                        FROM student_enroll_course,users, students, class_has_course
+                        WHERE class_has_course.id = class_has_course_id AND users.id = student_enroll_course.student_id AND users.id = students.id AND class_has_course_id = %L
                         ORDER BY students.stud_id`, class_has_course_id), function(error, result, fields) {
                         if (error) {
                             console.log(error.message + ' at get student by class_has_course');
@@ -791,8 +747,8 @@ router.post('/export-attendance-summary', function(req, res, next) {
                         } else {
                             //Sinh viên ko được miễn điểm danh
                             //count absences and total attendance
-                            connection.query(format(`SELECT COUNT(*) as count, attendance_type FROM attendance,attendance_detail 
-                                WHERE attendance.closed = TRUE AND id = attendance_id AND student_id = %L AND course_id = %L AND class_id = %L 
+                            connection.query(format(`SELECT COUNT(*) as count, attendance_type FROM attendance,attendance_detail
+                                WHERE attendance.closed = TRUE AND id = attendance_id AND student_id = %L AND course_id = %L AND class_id = %L
                                 GROUP BY attendance_type`, student.id, student.course_id, student.class_id), function(error, result, fields) {
                                 if (error) {
                                     console.log(error.message + ' at count attendance_details');
@@ -878,9 +834,9 @@ router.post('/export-attendance-lists', function(req, res, next) {
             function(callback) {
                 async.each(class_has_course_ids, function(class_has_course_id, callback) {
                     connection.query(format(`SELECT student_enroll_course.*,users.last_name,users.first_name, students.stud_id as student_code, students.id,
-                                    class_has_course.class_id, class_has_course.course_id, class_has_course.attendance_count 
-                        FROM student_enroll_course,users, students, class_has_course 
-                        WHERE class_has_course.id = class_has_course_id AND users.id = student_enroll_course.student_id AND users.id = students.id AND class_has_course_id = %L 
+                                    class_has_course.class_id, class_has_course.course_id, class_has_course.attendance_count
+                        FROM student_enroll_course,users, students, class_has_course
+                        WHERE class_has_course.id = class_has_course_id AND users.id = student_enroll_course.student_id AND users.id = students.id AND class_has_course_id = %L
                         ORDER BY students.stud_id`, class_has_course_id), function(error, result, fields) {
                         if (error) {
                             console.log(error.message + ' at get student by class_has_course');
@@ -910,10 +866,10 @@ router.post('/export-attendance-lists', function(req, res, next) {
                             callback();
                         } else {
                             //Sinh viên ko được miễn điểm danh
-                            connection.query(format(`SELECT attendance_detail.attendance_id, attendance_time, attendance_type ,created_at, edited_by, edited_reason, 
+                            connection.query(format(`SELECT attendance_detail.attendance_id, attendance_time, attendance_type ,created_at, edited_by, edited_reason,
                                     (SELECT CONCAT(users.first_name,' ',users.last_name) FROM users WHERE users.id = edited_by) as editor
-                                FROM attendance, attendance_detail 
-                                WHERE attendance.closed = TRUE AND attendance.id = attendance_detail.attendance_id AND course_id = %L AND class_id = %L AND student_id = %L 
+                                FROM attendance, attendance_detail
+                                WHERE attendance.closed = TRUE AND attendance.id = attendance_detail.attendance_id AND course_id = %L AND class_id = %L AND student_id = %L
                                 ORDER BY attendance_id`, student.course_id, student.class_id, student.id), function(error, result, fields) {
                                 if (error) {
                                     console.log(error.message + ' at get attendance_details by student');
@@ -1003,9 +959,9 @@ router.post('/export-exceeded-absence-limit', function(req, res, next) {
             function(callback) {
                 async.each(class_has_course_ids, function(class_has_course_id, callback) {
                     connection.query(format(`SELECT student_enroll_course.*,users.last_name,users.first_name, students.stud_id as student_code, students.id,
-                                    class_has_course.class_id, class_has_course.course_id, class_has_course.attendance_count 
-                        FROM student_enroll_course,users, students, class_has_course 
-                        WHERE class_has_course.id = class_has_course_id AND users.id = student_enroll_course.student_id AND users.id = students.id AND class_has_course_id = %L 
+                                    class_has_course.class_id, class_has_course.course_id, class_has_course.attendance_count
+                        FROM student_enroll_course,users, students, class_has_course
+                        WHERE class_has_course.id = class_has_course_id AND users.id = student_enroll_course.student_id AND users.id = students.id AND class_has_course_id = %L
                         ORDER BY students.stud_id`, class_has_course_id), function(error, result, fields) {
                         if (error) {
                             console.log(error.message + ' at get student by class_has_course');
@@ -1034,8 +990,8 @@ router.post('/export-exceeded-absence-limit', function(req, res, next) {
                         } else {
                             //Sinh viên ko được miễn điểm danh
                             //count absences and total attendance
-                            connection.query(format(`SELECT COUNT(*) as count, attendance_type FROM attendance,attendance_detail 
-                                WHERE attendance.closed = TRUE AND id = attendance_id AND student_id = %L AND course_id = %L AND class_id = %L 
+                            connection.query(format(`SELECT COUNT(*) as count, attendance_type FROM attendance,attendance_detail
+                                WHERE attendance.closed = TRUE AND id = attendance_id AND student_id = %L AND course_id = %L AND class_id = %L
                                 GROUP BY attendance_type`, student.id, student.course_id, student.class_id), function(error, result, fields) {
                                 if (error) {
                                     console.log(error.message + ' at count attendance_details');
@@ -1108,7 +1064,7 @@ router.post('/detail-by-code', function(req, res, next) {
             done();
             return console.log("Can't connect to database");
         }
-        connection.query(format(`SELECT * FROM users,students 
+        connection.query(format(`SELECT * FROM users,students
             WHERE students.stud_id = %L AND users.id = students.id LIMIT 1`, student_code), function(error, result, fields) {
             if (error) {
                 _global.sendError(res, error.message);
@@ -1162,7 +1118,7 @@ router.post('/change-attendance-status', function(req, res, next) {
                 done();
                 return;
             } else {
-                connection.query(format(`UPDATE student_enroll_course SET attendance_status = %L 
+                connection.query(format(`UPDATE student_enroll_course SET attendance_status = %L
                     WHERE student_id = %L AND class_has_course_id = %L`, status, student_id, result.rows[0].id), function(error, result, fields) {
                     if (error) {
                         _global.sendError(res, error.message);
@@ -1196,7 +1152,7 @@ router.post('/list-by-course', function(req, res, next) {
         }
         var student_list = [];
         connection.query(format(`SELECT students.id, students.stud_id as code, CONCAT(users.first_name, ' ', users.last_name) AS name
-            FROM users,student_enroll_course,students,class_has_course 
+            FROM users,student_enroll_course,students,class_has_course
             WHERE users.id = students.id AND users.id = student_enroll_course.student_id AND student_enroll_course.class_has_course_id = class_has_course.id AND class_has_course.course_id = %L AND class_has_course.class_id = %L`, course_id, class_id), function(error, result, fields) {
                 if (error) {
                     var message = error.message + ' at get student_list by course';
