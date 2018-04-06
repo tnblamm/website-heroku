@@ -7,7 +7,7 @@ declare var jQuery:any;
     templateUrl: './feedback-history.component.html'
 })
 export class FeedbackHistoryComponent implements OnInit {
-    
+
     public constructor(public  appService: AppService,public  feebackService: FeedbackService, public authService: AuthService) {
 
     }
@@ -39,6 +39,7 @@ export class FeedbackHistoryComponent implements OnInit {
     public feedback_title = '';
     public feedback_content = '';
     public feedback_from = '';
+    public reply_content = '';
     public feedback_id: number;
     public feedback_category ='';
     public pageNumber: number = 1;
@@ -53,6 +54,8 @@ export class FeedbackHistoryComponent implements OnInit {
     public onClickFeedback(index){
         this.selected_feedback = index;
         this.feedback_content = this.feedbacks[index].content;
+        this.feedback_id = this.feedbacks[index].id;
+        this.feedback_from = this.feedbacks[index]._from;
         this.feedback_title = this.feedbacks[index].title;
         for(var i = 0 ; i < this.appService.feedback_categories.length; i++){
             if(this.appService.feedback_categories[i].id == this.feedbacks[index].category){
@@ -61,6 +64,10 @@ export class FeedbackHistoryComponent implements OnInit {
             }
         }
         jQuery('#feedbackDetailModal').modal('show');
+        this.feebackService.readFeedbacks(this.feedbacks[index].id).subscribe(result=>{
+            this.getFeedbacks();
+            jQuery('#feedbackDetailModal').modal('show');
+        },error=>{this.appService.showPNotify('failure', "Server Error! Can't read feedbacks", 'error');});
     }
     public onSearchChange(){
         if(this.search_text.length > 3 || this.search_text.length == 0){
@@ -78,7 +85,19 @@ export class FeedbackHistoryComponent implements OnInit {
             }
         },error=>{ this.appService.showPNotify('failure',"Server Error! Can't delete feedback",'error'); });
     }
+    public sendReply(){
+        this.appService.sendReply(this.reply_content, this.feedback_id).subscribe(result=>{
+            if(result.result == 'success'){
+                jQuery('#feedbackDetailModal').modal('hide');
+                this.reply_content = '';
+                this.feedback_id = null;
+                this.getFeedbacks();
+            }else{
+                this.appService.showPNotify('failure', result.message, 'error');
+            }
 
+        },error=>{this.appService.showPNotify('failure', "Server Error! Can't read feedbacks", 'error');});
+    }
     @ViewChild(SendFeedbackModalComponent)
     public  sendFeedbackModal: SendFeedbackModalComponent;
     public onSendFeedback() {
