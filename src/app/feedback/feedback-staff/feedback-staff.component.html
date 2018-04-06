@@ -68,7 +68,7 @@
                 <div class="modal-body">
                     <label>From:</label> {{feedback_from}}<br>
                     <label>Title:</label> {{feedback_title}}<br>
-                    <label>Content:</label> {{feedback_content}}<br> 
+                    <label>Content:</label> {{feedback_content}}<br>
                     <label *ngIf="feedback_from != 'Anonymous'">Reply: </label>
                     <textarea rows="3" *ngIf="feedback_from != 'Anonymous'" [(ngModel)]="reply_content" autosize class="form-control"></textarea>
                 </div>
