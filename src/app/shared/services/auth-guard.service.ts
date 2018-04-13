@@ -22,83 +22,89 @@ export class AuthGuardService implements CanActivate, CanActivateChild, CanLoad 
     }
 
     public checkRole(url:string): boolean{
-        if(this.authService.current_user.role_id == this.appService.userType.teacher){
-            if(
-                url.indexOf('/statistic') >= 0 ||
-                url.indexOf("/semesters") >= 0 ||
-                url.indexOf("/classes") >= 0  ||
-                url.indexOf("/programs") >= 0 ||
-                url.indexOf("/settings") >= 0 ||
-                url.indexOf("/absence-requests") >= 0 ||
-                url.indexOf('/teachers') >= 0 ||
-                url.indexOf('/courses/add') >= 0 ||
-                (url.indexOf('/courses') >= 0  && url.indexOf('/edit') >= 0) ||
-                url.indexOf('/students') >= 0
-                ){
-                this.router.navigate(['/dashboard']);
-                return false;
-            }else{    
-                return true;
+        if (this.authService.current_user != undefined) {
+            if(this.authService.current_user.role_id == this.appService.userType.teacher){
+                if(
+                    url.indexOf('/statistic') >= 0 ||
+                    url.indexOf("/semesters") >= 0 ||
+                    url.indexOf("/classes") >= 0  ||
+                    url.indexOf("/programs") >= 0 ||
+                    url.indexOf("/settings") >= 0 ||
+                    url.indexOf("/absence-requests") >= 0 ||
+                    url.indexOf('/teachers') >= 0 ||
+                    url.indexOf('/courses/add') >= 0 ||
+                    (url.indexOf('/courses') >= 0  && url.indexOf('/edit') >= 0) ||
+                    url.indexOf('/students') >= 0
+                    ){
+                    this.router.navigate(['/dashboard']);
+                    return false;
+                }else{    
+                    return true;
+                }
             }
-        }
-        if(this.authService.current_user.role_id == this.appService.userType.student){
-            if(
-                url.indexOf('/statistic') >= 0 ||
-                url.indexOf("/semesters") >= 0 ||
-                url.indexOf("/classes") >= 0  ||
-                url.indexOf("/programs") >= 0 ||
-                url.indexOf("/settings") >= 0 ||
-                url.indexOf('/teachers') >= 0 ||
-                url.indexOf('/courses') >= 0 ||
-                url.indexOf('/students') >= 0 ||
-                url == '/quiz' ||
-                url == '/quiz/display'
-                ){
-                this.router.navigate(['/dashboard']);
-                return false;
-            }else{    
-                return true;
+            if(this.authService.current_user.role_id == this.appService.userType.student){
+                if(
+                    url.indexOf('/statistic') >= 0 ||
+                    url.indexOf("/semesters") >= 0 ||
+                    url.indexOf("/classes") >= 0  ||
+                    url.indexOf("/programs") >= 0 ||
+                    url.indexOf("/settings") >= 0 ||
+                    url.indexOf('/teachers') >= 0 ||
+                    url.indexOf('/courses') >= 0 ||
+                    url.indexOf('/students') >= 0 ||
+                    url == '/quiz' ||
+                    url == '/quiz/display'
+                    ){
+                    this.router.navigate(['/dashboard']);
+                    return false;
+                }else{    
+                    return true;
+                }
             }
-        }
-        if(this.authService.current_user.role_id == this.appService.userType.staff){
-            if(
-                url.indexOf("/settings") >= 0 ||
-                url.indexOf('/check-attendance') >= 0 ||
-                url == '/quiz' ||
-                url == '/quiz/display'
-                ){
-                this.router.navigate(['/dashboard']);
-                return false;
-            }else{    
-                return true;
+            if(this.authService.current_user.role_id == this.appService.userType.staff){
+                if(
+                    url.indexOf("/settings") >= 0 ||
+                    url.indexOf('/check-attendance') >= 0 ||
+                    url == '/quiz' ||
+                    url == '/quiz/display'
+                    ){
+                    this.router.navigate(['/dashboard']);
+                    return false;
+                }else{    
+                    return true;
+                }
             }
-        }
-        if(this.authService.current_user.role_id == this.appService.userType.admin){
-            if(
-                url.indexOf('/statistic') >= 0 ||
-                url.indexOf("/semesters") >= 0 ||
-                url.indexOf("/classes") >= 0  ||
-                url.indexOf("/programs") >= 0 ||
-                url.indexOf('/teachers') >= 0 ||
-                url.indexOf('/courses') >= 0 ||
-                url.indexOf('/students') >= 0 ||
-                url.indexOf('/check-attendance') >= 0 ||
-                url.indexOf("/absence-requests") >= 0 ||
-                url == '/quiz' ||
-                url == '/quiz/display'
-                ){
-                this.router.navigate(['/dashboard']);
-                return false;
-            }else{    
-                return true;
+            if(this.authService.current_user.role_id == this.appService.userType.admin){
+                if(
+                    url.indexOf('/statistic') >= 0 ||
+                    url.indexOf("/semesters") >= 0 ||
+                    url.indexOf("/classes") >= 0  ||
+                    url.indexOf("/programs") >= 0 ||
+                    url.indexOf('/teachers') >= 0 ||
+                    url.indexOf('/courses') >= 0 ||
+                    url.indexOf('/students') >= 0 ||
+                    url.indexOf('/check-attendance') >= 0 ||
+                    url.indexOf("/absence-requests") >= 0 ||
+                    url == '/quiz' ||
+                    url == '/quiz/display'
+                    ){
+                    this.router.navigate(['/dashboard']);
+                    return false;
+                }else{    
+                    return true;
+                }
             }
         }
         return true;
     }
     public checkLogin(url: string): boolean {
         if (this.localStorage.get('isLoggedIn')) {
-            this.authService.current_user = this.localStorage.get('current_user');
-            this.authService.token = this.localStorage.get('token').toString();
+            if (this.localStorage.get('current_user')){
+                this.authService.current_user = this.localStorage.get('current_user');
+            }
+            if (this.localStorage.get('token')) {
+                this.authService.token = this.localStorage.get('token').toString();
+            }
             return this.checkRole(url);
         }
 

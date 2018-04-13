@@ -9,19 +9,24 @@ import { AppService } from '../../services/app.service';
 export class SideMenuComponent implements OnInit {
 
     public constructor(public  authService: AuthService, public  appService: AppService) {
-        switch (authService.current_user.role_id) {
-            case appService.userType.staff:
-                this.sideMenu = this.staffMenu;
-                break;
-            case this.appService.userType.student:
-                this.sideMenu = this.studentMenu;
-                break;
-            case this.appService.userType.teacher:
-                this.sideMenu = this.teacherMenu;
-                break;
-            case this.appService.userType.admin:
-                this.sideMenu = this.adminMenu;
-                break;
+        if (authService.current_user){
+            switch (authService.current_user.role_id) {
+                case appService.userType.staff:
+                    this.sideMenu = this.staffMenu;
+                    break;
+                case this.appService.userType.student:
+                    this.sideMenu = this.studentMenu;
+                    break;
+                case this.appService.userType.teacher:
+                    this.sideMenu = this.teacherMenu;
+                    break;
+                case this.appService.userType.admin:
+                    this.sideMenu = this.adminMenu;
+                    break;
+                default:
+                    this.sideMenu = this.staffMenu;
+                    break;
+            }
         }
     }
 
