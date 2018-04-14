@@ -120,6 +120,7 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
 	public getQuiz(){
 		this.quizService.getPublishedQuiz(this.quiz_code).subscribe(result=>{
 			if(result.result == 'success'){
+				console.log('get quiz', result.quiz);
 				this.quiz = result.quiz;
 				this.miscellaneous_threshold = this.quiz['questions'].length;
 			}
