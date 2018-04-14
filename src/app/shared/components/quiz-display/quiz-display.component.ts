@@ -239,6 +239,7 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
 	}
 	public onEndQuiz(){
 		this.studentService.getStudentByCourse(this.selected_attendance['course_id'],this.selected_attendance['class_id']).subscribe(result=>{
+			console.log('quiz', this.quiz);
 			if(result.result == 'success'){
 				this.student_list = result.student_list;
 				for(var i = 0 ; i < this.student_list.length; i++){
