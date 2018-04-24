@@ -120,6 +120,7 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
 	public getQuiz(){
 		this.quizService.getPublishedQuiz(this.quiz_code).subscribe(result=>{
 			if(result.result == 'success'){
+				console.log('get quiz', result.quiz);
 				this.quiz = result.quiz;
 				this.miscellaneous_threshold = this.quiz['questions'].length;
 			}
@@ -239,6 +240,7 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
 	}
 	public onEndQuiz(){
 		this.studentService.getStudentByCourse(this.selected_attendance['course_id'],this.selected_attendance['class_id']).subscribe(result=>{
+			console.log('quiz', this.quiz);
 			if(result.result == 'success'){
 				this.student_list = result.student_list;
 				for(var i = 0 ; i < this.student_list.length; i++){

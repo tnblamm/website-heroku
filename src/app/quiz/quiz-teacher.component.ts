@@ -59,6 +59,7 @@ export class QuizTeacherComponent implements OnInit {
                 this.appService.showPNotify(this.apiResult,this.apiResultMessage,'error');
             }else{
                 this.quiz_list = result.quiz_list;
+                console.log(this.quiz_list);
                 for(var i = 0 ; i < this.quiz_list.length; i++){
                     this.quiz_list[i]['isOpen'] = false;
                 }
