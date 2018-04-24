@@ -7,8 +7,6 @@ var connection = mysql.createConnection(_global.db);
 var pool = mysql.createPool(_global.db);
 var jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
 var bcrypt = require('bcrypt');
-var new_student = [];
-var async = require("async");
 var nodemailer = require('nodemailer');
 var pg = require('pg');
 var format = require('pg-format');
@@ -80,38 +78,46 @@ router.post('/list', function(req, res, next) {
 });
 
 router.post('/add', function(req, res, next) {
-  if (req.body.program_id == undefined || req.body.program_id == 0) {
-      _global.sendError(res, null, "Program is required");
-      return;
-  }
-  if (req.body.class_id == undefined || req.body.class_id == 0) {
-      _global.sendError(res, null, "Class is required");
-      return;
-  }
-  if (req.body.code == undefined || req.body.code == '') {
-      _global.sendError(res, null, "Student code is required");
-      return;
-  }
-  if (req.body.first_name == undefined || req.body.first_name == '') {
-      _global.sendError(res, null, "First name is required");
-      return;
-  }
-  if (req.body.last_name == undefined || req.body.last_name == '') {
-      _global.sendError(res, null, "Last name is required");
-      return;
-  }
-  if (req.body.phone == undefined || isNaN(req.body.phone)) {
-      _global.sendError(res, null, "Invalid Phone Number");
-      return;
-  }
-  var new_class_id = req.body.class_id;
-  var new_program_id = req.body.program_id;
-  var new_code = req.body.code;
-  var new_first_name = req.body.first_name;
-  var new_last_name = req.body.last_name;
-  var new_email = req.body.email;
-  var new_phone = req.body.phone;
-  var new_note = req.body.note;
+    if (req.body.program_id == undefined || req.body.program_id == 0) {
+        _global.sendError(res, null, "Program is required");
+        return;
+    }
+    if (req.body.class_id == undefined || req.body.class_id == 0) {
+        _global.sendError(res, null, "Class is required");
+        return;
+    }
+    if (req.body.code == undefined || req.body.code == '') {
+        _global.sendError(res, null, "Student code is required");
+        return;
+    }
+    if (req.body.first_name == undefined || req.body.first_name == '') {
+        _global.sendError(res, null, "First name is required");
+        return;
+    }
+    if (req.body.last_name == undefined || req.body.last_name == '') {
+        _global.sendError(res, null, "Last name is required");
+        return;
+    }
+    if (req.body.email == undefined || req.body.email == '') {
+        _global.sendError(res, null, "Email is required");
+        return;
+    }
+    if (req.body.email.indexOf('@') == -1) {
+        _global.sendError(res, null, "Invalid Email");
+        return;
+    }
+    if (req.body.phone == undefined || isNaN(req.body.phone)) {
+        _global.sendError(res, null, "Invalid Phone Number");
+        return;
+    }
+    var new_class_id = req.body.class_id;
+    var new_program_id = req.body.program_id;
+    var new_code = req.body.code;
+    var new_first_name = req.body.first_name;
+    var new_last_name = req.body.last_name;
+    var new_email = req.body.email;
+    var new_phone = req.body.phone;
+    var new_note = req.body.note;
     pool_postgres.connect(function(error, connection, done) {
         if (error) {
             _global.sendError(res, error.message);
@@ -119,52 +125,91 @@ router.post('/add', function(req, res, next) {
             return console.log(error);
         }
 
-          connection.query(format(`SELECT stud_id FROM students WHERE stud_id = %L LIMIT 1`, new_code), function(error, result, fields) {
+        connection.query(format(`SELECT stud_id FROM students WHERE stud_id = %L LIMIT 1`, new_code), function(error, result, fields) {
             if (error) {
                 _global.sendError(res, error.message);
                 done();
                 return console.log(error);
             }
-            //check code exist
+            //check email exist
             if (result.rowCount > 0) {
                 _global.sendError(res, null, "Student code already existed");
                 done();
                 return console.log("Student code already existed");
             }
-            //new teacher data
-            var new_password = new_email.split('@')[0];
-            var new_user = [[
-                new_first_name,
-                new_last_name,
-                new_email,
-                new_phone,
-                bcrypt.hashSync(new_password, 10),
-                _global.role.student
-            ]];
-            //begin adding teacher
-            connection.query('BEGIN', function(error) {
+            connection.query(format(`SELECT email FROM users WHERE email = %L LIMIT 1`, new_email), function(error, result, fields) {
                 if (error) {
                     _global.sendError(res, error.message);
                     done();
                     return console.log(error);
                 }
-                //add data to user table
-                connection.query(format('INSERT INTO users (first_name,last_name,email,phone,password,role_id) VALUES %L', new_user), function(error, result, fields) {
-                    if (error) {
-                        _global.sendError(res.error.message);
-                        return connection.query('ROLLBACK', function(error) {
-                            done();
-                            return console.log(error);
+                //check email exist
+                if (result.rowCount > 0) {
+                    _global.sendError(res, "Email already existed");
+                    done();
+                    return console.log("Email already existed");
+                }
+                //new data to users table
+                var new_password = new_email.split('@')[0];
+                var new_user = [[
+                    new_first_name,
+                    new_last_name,
+                    new_email,
+                    new_phone,
+                    bcrypt.hashSync(new_password, 10),
+                    _global.role.student
+                ]];
+                var new_student = [];
+                async.series([
+                    //Start transaction
+                    function(callback) {
+                        connection.query('BEGIN', (error) => {
+                            if (error) callback(error);
+                            else callback();
                         });
-                    }
-                    connection.query('COMMIT', function(error) {
-                        if (error) {
-                            _global.sendError(res.error.message);
-                            return connection.query('ROLLBACK', function(error) {
-                                done();
-                                return console.log(error);
-                            });
-                        }
+                    },
+                    //add data to user table
+                    function(callback) {
+                        connection.query(format('INSERT INTO users (first_name,last_name,email,phone,password,role_id) VALUES %L RETURNING id', new_user), function(error, result, fields) {
+                            if (error) {
+                                callback(error);
+                            }else{
+                                new_student = [[
+                                    result.rows[0].id,
+                                    new_code,
+                                    new_class_id,
+                                    new_note
+                                ]];
+                                callback();
+                            }
+                        });
+                    },
+                    //insert student
+                    function(callback) {
+                        connection.query(format('INSERT INTO students (id,stud_id,class_id,note) VALUES %L', new_student), function(error, result, fields) {
+                            if (error) {
+                                callback(error);
+                            }else{
+                                callback();
+                            }
+                        });
+                    },
+                    //Commit transaction
+                    function(callback) {
+                        connection.query('COMMIT', (error) => {
+                            if (error) callback(error);
+                            else callback();
+                        });
+                    },
+                ], function(error) {
+                    if (error) {
+                        _global.sendError(res, error.message);
+                        connection.query('ROLLBACK', (error) => {
+                            if (error) return console.log(error);
+                        });
+                        done();
+                        return console.log(error);
+                    } else {
                         var token = jwt.sign({ email: new_email }, _global.jwt_secret_key, { expiresIn: _global.jwt_register_expire_time });
                         var link = _global.host + '/register;token=' + token;
                         _global.sendMail(
@@ -182,7 +227,7 @@ router.post('/add', function(req, res, next) {
                         console.log('success adding student!');
                         res.send({ result: 'success', message: 'Student Added Successfully' });
                         done();
-                    });
+                    }
                 });
             });
         });
@@ -410,7 +455,7 @@ router.post('/import', function(req, res, next) {
                                 var new_user = [[
                                     _global.getFirstName(student.name),
                                     _global.getLastName(student.name),
-                                    student.stud_id + '@student.hcmus.edu.vn',
+                                    _global.getEmailStudentApcs(student.name),
                                     student.phone,
                                     _global.role.student,
                                     bcrypt.hashSync(student.stud_id.toString(), 10),
@@ -431,7 +476,7 @@ router.post('/import', function(req, res, next) {
                                             } else {
                                                 new_student_list.push({
                                                     name : _global.getLastName(student.name),
-                                                    email : student.stud_id + '@student.hcmus.edu.vn'
+                                                    email : _global.getEmailStudentApcs(student.name)
                                                 });
                                                 callback();
                                             }
@@ -469,19 +514,20 @@ router.post('/import', function(req, res, next) {
                 return console.log(error);
             } else {
                 async.each(new_student_list, function(student, callback) {
+                    console.log("Send Mail" , student.email)
                     var token = jwt.sign({ email: student.email }, _global.jwt_secret_key, { expiresIn: _global.jwt_register_expire_time });
                     var link = _global.host + '/register;token=' + token;
                     _global.sendMail(
-                        '"Giáo vụ"',
+                        '"Nhóm Capstone"',
                         student.email,
                          'Register your account',
-                        'Hi,'+ student.name + '\r\n' +
-                            'Your account has been created.To setup your account for the first time, please go to the following web address: \r\n\r\n' +
+                        'Chào bạn '+ student.name + ' \r\n' +
+                            'Nhóm mình làm môn Captone đề tài về Checking Attendance. Hệ thống này giúp giáo viên và học sinh có thể điểm danh  thông qua điện thoại và website, qua đó giúp tiết kiệm thời gian cũng như an toàn hơn . Hệ thống này cũng giúp cho giáo vụ có thể quản lý học sinh một cách dơn giản và hiệu quả . Dưới sự cho phép của thầy Vũ, nhóm mình sẽ triển khai thử nghiệm đồ án vào môn Software Testing CS423. Hiện tại nếu điện thoại của bạn chạy hệ điều hành anhdroid xin cài đật file apk theo link bên dưới . Quá trình thử nghiệm sẽ bắt đầu từ thứ 5 tuần này ngày 19/1/2018 . Việc thử nghiệm này sẽ được hướng dẫn chi tiết vào đầu buổi học chiều thứ 5 ngày 19/1/ 2018. Mong bạn sử dụng và hồi đáp cho nhóm mình. Cảm ơn bạn \r\n\r\n' +
+                            'Tài khoản của bạn đã được tạo với tên ' + student.email.replace('@apcs.vn', '') + '\r\n\r\n' +
                             link +
-                            '\r\n(This link is valid for 7 days from the time you received this email)\r\n\r\n' +
-                            'If you need help, please contact the site administrator,\r\n' +
-                            'Admin User \r\n\r\n' +
-                            'admin@fit.hcmus.edu.vn'
+                            '\r\n( Đường link chỉ tồn tại 7 ngày kể từ ngày nhận mail.) \r\n\r\n' +
+                            'Link cho app Android: https://drive.google.com/open?id=1nr7z80yBkeVSvJSNMKZQg_TuqFONNxmm \r\n\r\n'
+
                             );
                     callback();
                 }, function(error) {
