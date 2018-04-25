@@ -235,6 +235,7 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
 	}
 
 	public onSaveQuiz(){
+		this.socketService.emitEventOnMobileEndedQuiz({'quiz_code': this.quiz_code});
 		this.quizService.saveQuiz(this.quiz,this.attendance_checked_list).subscribe(result=>{
 			if(result.result == 'failure'){
 				this.appService.showPNotify('failure',result.message,'error');
@@ -251,7 +252,7 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
 	public onEndQuiz(){
 		this.studentService.getStudentByCourse(this.selected_attendance['course_id'],this.selected_attendance['class_id']).subscribe(result=>{
 			console.log('quiz', this.quiz);
-			this.socketService.emitEventOnMobileEndedQuiz({'quiz_code': this.quiz_code});
+			// this.socketService.emitEventOnMobileEndedQuiz({'quiz_code': this.quiz_code});
 			if(result.result == 'success'){
 				this.student_list = result.student_list;
 				for(var i = 0 ; i < this.student_list.length; i++){
