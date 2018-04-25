@@ -1843,7 +1843,6 @@ var QuizDisplayComponent = (function () {
             if (result.result == 'success') {
                 _this.quiz['started_at'] = new Date();
                 _this.socketService.consumeEventOnAnsweredQuiz();
-                _this.socketService.emitEventOnStartedQuiz({ 'quiz_code': _this.quiz_code });
                 _this.socketService.invokeAnsweredQuiz.subscribe(function (result) {
                     if (_this.quiz_code == result['quiz_code']) {
                         var question_index = result['question_index'];
@@ -5923,7 +5922,7 @@ var SocketService = (function () {
         this.invokeQuittedQuiz = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.invokeAnsweredQuiz = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.invokeQuizEnded = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
-        this.invokeStartQuiz = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
+        this.invokeStartedQuiz = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.invokeNotificationPushed = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.socket = __WEBPACK_IMPORTED_MODULE_1_socket_io_client__();
     }
@@ -6056,7 +6055,7 @@ var SocketService = (function () {
     SocketService.prototype.consumeEventOnStartedQuiz = function () {
         var self = this;
         this.socket.on('startQuiz', function (event) {
-            self.invokeStartQuiz.next(event);
+            self.invokeStartedQuiz.next(event);
         });
     };
     ;

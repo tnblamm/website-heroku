@@ -16,7 +16,7 @@ export class SocketService {
   public invokeQuittedQuiz = new Subject();
   public invokeAnsweredQuiz = new Subject();
   public invokeQuizEnded = new Subject();
-  public invokeStartQuiz = new Subject();
+  public invokeStartedQuiz = new Subject();
   public invokeNotificationPushed = new Subject();
   // Constructor with an injection of ToastService
   public constructor() {
@@ -164,7 +164,7 @@ export class SocketService {
   public consumeEventOnStartedQuiz() {
     var self = this;
     this.socket.on('startQuiz', function(event:any){
-      self.invokeStartQuiz.next(event);
+      self.invokeStartedQuiz.next(event);
     });
   };
   public stopEventOnStartedQuiz() {
