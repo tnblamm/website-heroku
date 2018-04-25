@@ -9,7 +9,6 @@ export class SocketService {
   public invokeCheckAttendanceCreated = new Subject();
   public invokeCheckAttendanceStopped = new Subject();
   public invokeQuizStopped = new Subject();
-  public invokeQuizStartMobile = new Subject();
   public invokeQuizQuestionReady = new Subject();
   public invokeQuizQuestionLoaded = new Subject();
   public invokeQuizQuestionEnded = new Subject();
@@ -78,16 +77,6 @@ export class SocketService {
     });
   }
   public stopEventOnQuizStopped(){this.socket.off('quizStopped');}
-
-  //Teacher start quiz on mobile
-  // public emitEventOnQuizStartMobile(quizStartMobile){this.socket.emit('quizStartMobile', quizStartMobile);}
-  // public consumeEventOnQuizStartMobile(){
-  //   var self = this;
-  //   this.socket.on('quizStartMobile', function(event:any){
-  //     self.invokeQuizStartMobile.next(event);
-  //   });
-  // }
-  // public stopEventOnQuizStartMobile(){this.socket.off('quizStartMobile');}
 
   //Teacher end quiz normarlly
   public emitEventOnQuizEnded(quizEnded){this.socket.emit('quizEnded', quizEnded);}
