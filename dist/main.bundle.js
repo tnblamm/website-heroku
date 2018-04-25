@@ -1843,7 +1843,7 @@ var QuizDisplayComponent = (function () {
             if (result.result == 'success') {
                 _this.quiz['started_at'] = new Date();
                 _this.socketService.consumeEventOnAnsweredQuiz();
-                _this.socketService.emitEventOnQuizStartMobile({ 'quiz_code': _this.quiz_code });
+                // this.socketService.emitEventOnQuizStartMobile({'quiz_code': this.quiz_code});
                 _this.socketService.invokeAnsweredQuiz.subscribe(function (result) {
                     if (_this.quiz_code == result['quiz_code']) {
                         var question_index = result['question_index'];
