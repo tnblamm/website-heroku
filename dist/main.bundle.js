@@ -1843,7 +1843,6 @@ var QuizDisplayComponent = (function () {
             if (result.result == 'success') {
                 _this.quiz['started_at'] = new Date();
                 _this.socketService.consumeEventOnAnsweredQuiz();
-                // this.socketService.emitEventOnQuizStartMobile({'quiz_code': this.quiz_code});
                 _this.socketService.invokeAnsweredQuiz.subscribe(function (result) {
                     if (_this.quiz_code == result['quiz_code']) {
                         var question_index = result['question_index'];
@@ -5979,14 +5978,14 @@ var SocketService = (function () {
     };
     SocketService.prototype.stopEventOnQuizStopped = function () { this.socket.off('quizStopped'); };
     //Teacher start quiz on mobile
-    SocketService.prototype.emitEventOnQuizStartMobile = function (quizStartMobile) { this.socket.emit('quizStartMobile', quizStartMobile); };
-    SocketService.prototype.consumeEventOnQuizStartMobile = function () {
-        var self = this;
-        this.socket.on('quizStartMobile', function (event) {
-            self.invokeQuizStartMobile.next(event);
-        });
-    };
-    SocketService.prototype.stopEventOnQuizStartMobile = function () { this.socket.off('quizStartMobile'); };
+    // public emitEventOnQuizStartMobile(quizStartMobile){this.socket.emit('quizStartMobile', quizStartMobile);}
+    // public consumeEventOnQuizStartMobile(){
+    //   var self = this;
+    //   this.socket.on('quizStartMobile', function(event:any){
+    //     self.invokeQuizStartMobile.next(event);
+    //   });
+    // }
+    // public stopEventOnQuizStartMobile(){this.socket.off('quizStartMobile');}
     //Teacher end quiz normarlly
     SocketService.prototype.emitEventOnQuizEnded = function (quizEnded) { this.socket.emit('quizEnded', quizEnded); };
     SocketService.prototype.consumeEventOnQuizEnded = function () {
