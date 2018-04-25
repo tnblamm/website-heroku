@@ -127,6 +127,12 @@ io.sockets.on('connection', function(socket){
     io.emit('mobileStartedQuiz', quizStartMobileFromWeb);
   });
 
+  // Socket event for ending quiz for teacher in mobile
+  socket.on('mobileEndedQuiz', function (quizEndedMobile) {
+    console.log('mobileEndedQuiz', quizEndedMobile);
+    io.emit('mobileEndedQuiz', quizEndedMobile);
+  });
+
   socket.on('disconnect', function() {
       console.log('Socket disconnect!');
    });

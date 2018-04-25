@@ -93,10 +93,9 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
 		});
 		socketService.consumeEventOnMobileStartedQuiz();
 		socketService.invokeMobileStartedQuiz.subscribe(result => {
-			// if (this.quiz_code == result['quiz_code']){
-			// 	this.onStartQuiz()
-			// }
-			this.onStartQuiz(false);
+			if (this.quiz_code == result['quiz_code']){
+				this.onStartQuiz(false);
+			}
 			console.log('consumeEventOnMobileStartedQuiz', result);
 		})
 	}

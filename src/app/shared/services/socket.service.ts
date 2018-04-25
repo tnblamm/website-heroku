@@ -19,6 +19,7 @@ export class SocketService {
   public invokeNotificationPushed = new Subject();
   public invokePortalStartedQuiz = new Subject();
   public invokeMobileStartedQuiz = new Subject();
+  public invokeMobileEndedQuiz = new Subject();
   // Constructor with an injection of ToastService
   public constructor() {
     this.socket = io();
@@ -185,5 +186,19 @@ export class SocketService {
   };
   public stopEventOnMobileStartedQuiz(){
     this.socket.off('mobileStartedQuiz');
+  }
+
+  //End Quiz on mobile
+  public emitEventOnMobileEndedQuiz(quizCode){
+    this.socket.emit('mobileEndedQuiz', quizCode);
+  };
+  public consumeEventOnMobileEndedQuiz(){
+    var self = this;
+    this.socket.on('mobileEndedQuiz', function(event:any){
+      self.invokeMobileEndedQuiz.next(event);
+    });
+  };
+  public stopEventOnMobileEndedQuiz(){
+    this.socket.off('mobileEndedQuiz');
   }
 }
