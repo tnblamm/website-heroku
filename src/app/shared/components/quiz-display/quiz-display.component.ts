@@ -194,6 +194,7 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
 			if(result.result == 'success'){
 				this.quiz['started_at'] = new Date();
 				this.socketService.consumeEventOnAnsweredQuiz();
+				this.socketService.emitEventOnQuizStartMobile(this.quiz_code);
 			    this.socketService.invokeAnsweredQuiz.subscribe(result => {
 			        if (this.quiz_code == result['quiz_code']) {
 			        	var question_index = result['question_index'];
