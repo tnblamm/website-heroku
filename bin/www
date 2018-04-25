@@ -115,10 +115,16 @@ io.sockets.on('connection', function(socket){
     io.emit('notificationPushed', notificationPushed);
   });
 
-  // Socket event for start quiz for teacher in mobile
-  socket.on('startedQuiz', function (quizStartMobile) {
-    console.log('startedQuiz', quizStartMobile);
-    io.emit('startedQuiz', quizStartMobile);
+  // Socket event for start quiz for teacher in mobile through web
+  socket.on('portalStartedQuiz', function (quizStartMobile) {
+    console.log('portalStartedQuiz', quizStartMobile);
+    io.emit('portalStartedQuiz', quizStartMobile);
+  });
+
+  // Socket event for start quiz for teacher in web through mobile
+  socket.on('mobileStartedQuiz', function (quizStartMobileFromWeb) {
+    console.log('mobileStartedQuiz', quizStartMobileFromWeb);
+    io.emit('mobileStartedQuiz', quizStartMobileFromWeb);
   });
 
   socket.on('disconnect', function() {

@@ -90,7 +90,14 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
                 this.onStopQuiz();
                 this.appService.showPNotify('Info',"Attendance session is " + result['message'],'info');
             }
-        });
+		});
+		socketService.consumeEventOnMobileStartedQuiz();
+		socketService.invokeMobileStartedQuiz.subscribe(result => {
+			// if (this.quiz_code == result['quiz_code']){
+			// 	this.onStartQuiz()
+			// }
+			console.log('consumeEventOnMobileStartedQuiz', result);
+		})
 	}
 	public ngOnInit() {
 		if(this.localStorage.get('get_published_quiz_error')){
@@ -194,7 +201,7 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
 			if(result.result == 'success'){
 				this.quiz['started_at'] = new Date();
 				this.socketService.consumeEventOnAnsweredQuiz();
-				this.socketService.emitEventOnStartedQuiz({'quiz_code': this.quiz_code});
+				this.socketService.emitEventOnPortalStartedQuiz({'quiz_code': this.quiz_code});
 			    this.socketService.invokeAnsweredQuiz.subscribe(result => {
 			        if (this.quiz_code == result['quiz_code']) {
 			        	var question_index = result['question_index'];
