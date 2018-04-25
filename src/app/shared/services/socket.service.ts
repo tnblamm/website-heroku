@@ -191,6 +191,7 @@ export class SocketService {
   //End Quiz on mobile
   public emitEventOnMobileEndedQuiz(quizCode){
     this.socket.emit('mobileEndedQuiz', quizCode);
+    console.log('mobileEndedQuiz', quizCode);
   };
   public consumeEventOnMobileEndedQuiz(){
     var self = this;
