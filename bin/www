@@ -116,10 +116,10 @@ io.sockets.on('connection', function(socket){
   });
 
   // Socket event for start quiz for teacher in mobile
-  // socket.on('quizStartMobile', function (quizStartMobile) {
-  //   console.log('quizStartMobile', quizStartMobile);
-  //   io.emit('quizStartMobile', quizStartMobile);
-  // });
+  socket.on('startedQuiz', function (quizStartMobile) {
+    console.log('startedQuiz', quizStartMobile);
+    io.emit('startedQuiz', quizStartMobile);
+  });
 
   socket.on('disconnect', function() {
       console.log('Socket disconnect!');
