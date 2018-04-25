@@ -157,17 +157,4 @@ export class SocketService {
     });
   }
   public stopEventOnNotificationPushed(){this.socket.off('notificationPushed');}
-
-  public emitEventOnStartedQuiz(quizCode){
-    this.socket.emit('startQuiz', quizCode);
-  }
-  public consumeEventOnStartedQuiz() {
-    var self = this;
-    this.socket.on('startQuiz', function(event:any){
-      self.invokeStartedQuiz.next(event);
-    });
-  };
-  public stopEventOnStartedQuiz() {
-    this.socket.off('startQuiz');
-  };
 }

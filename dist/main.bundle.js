@@ -6049,20 +6049,6 @@ var SocketService = (function () {
         });
     };
     SocketService.prototype.stopEventOnNotificationPushed = function () { this.socket.off('notificationPushed'); };
-    SocketService.prototype.emitEventOnStartedQuiz = function (quizCode) {
-        this.socket.emit('startQuiz', quizCode);
-    };
-    SocketService.prototype.consumeEventOnStartedQuiz = function () {
-        var self = this;
-        this.socket.on('startQuiz', function (event) {
-            self.invokeStartedQuiz.next(event);
-        });
-    };
-    ;
-    SocketService.prototype.stopEventOnStartedQuiz = function () {
-        this.socket.off('startQuiz');
-    };
-    ;
     return SocketService;
 }());
 SocketService = __decorate([
