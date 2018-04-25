@@ -96,6 +96,7 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
 			// if (this.quiz_code == result['quiz_code']){
 			// 	this.onStartQuiz()
 			// }
+			this.onStartQuiz(false);
 			console.log('consumeEventOnMobileStartedQuiz', result);
 		})
 	}
@@ -196,12 +197,14 @@ export class QuizDisplayComponent implements OnInit,OnDestroy {
 			this.ready_progress = this.ready * 20;
 		}, 1000);
 	}
-	public onStartQuiz(){
+	public onStartQuiz(isPortalStarted){
 		this.quizService.startQuiz(this.quiz_code).subscribe(result=>{
 			if(result.result == 'success'){
 				this.quiz['started_at'] = new Date();
+				if (isPortalStarted) {
+					this.socketService.emitEventOnPortalStartedQuiz({'quiz_code': this.quiz_code});
+				}
 				this.socketService.consumeEventOnAnsweredQuiz();
-				this.socketService.emitEventOnPortalStartedQuiz({'quiz_code': this.quiz_code});
 			    this.socketService.invokeAnsweredQuiz.subscribe(result => {
 			        if (this.quiz_code == result['quiz_code']) {
 			        	var question_index = result['question_index'];

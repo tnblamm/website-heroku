@@ -4,7 +4,7 @@
             <h2>{{quiz.title}} - <ng-container *ngIf="quiz['type'] == appService.quiz_type.academic.id">{{appService.quiz_type.academic.title}}</ng-container><ng-container *ngIf="quiz['type'] == appService.quiz_type.miscellaneous.id">{{appService.quiz_type.miscellaneous.title}}</ng-container></h2>
             <div class="navbar-btn pull-right">
                 <ng-container *ngIf="!is_started && !is_ended && !is_ready">
-                    <button *ngIf="quiz['participants'].length > 0" class="btn btn-primary btn-lg" (click)="onStartQuiz()">Start</button>
+                    <button *ngIf="quiz['participants'].length > 0" class="btn btn-primary btn-lg" (click)="onStartQuiz(true)">Start</button>
                     <button *ngIf="quiz['participants'].length == 0" type="button" class="btn btn-primary btn-lg" disabled>Start</button>
                 </ng-container>
                 <ng-container *ngIf="is_started && !is_ended && !is_ready">
