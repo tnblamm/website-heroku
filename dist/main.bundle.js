@@ -5922,7 +5922,6 @@ var SocketService = (function () {
         this.invokeQuittedQuiz = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.invokeAnsweredQuiz = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.invokeQuizEnded = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
-        this.invokeStartedQuiz = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.invokeNotificationPushed = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.socket = __WEBPACK_IMPORTED_MODULE_1_socket_io_client__();
     }
@@ -6049,20 +6048,6 @@ var SocketService = (function () {
         });
     };
     SocketService.prototype.stopEventOnNotificationPushed = function () { this.socket.off('notificationPushed'); };
-    SocketService.prototype.emitEventOnStartedQuiz = function (quizCode) {
-        this.socket.emit('startedQuiz', quizCode);
-    };
-    SocketService.prototype.consumeEventOnStartedQuiz = function () {
-        var self = this;
-        this.socket.on('startedQuiz', function (event) {
-            self.invokeStartedQuiz.next(event);
-        });
-    };
-    ;
-    SocketService.prototype.stopEventOnStartedQuiz = function () {
-        this.socket.off('startedQuiz');
-    };
-    ;
     return SocketService;
 }());
 SocketService = __decorate([
