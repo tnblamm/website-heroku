@@ -5915,7 +5915,6 @@ var SocketService = (function () {
         this.invokeCheckAttendanceCreated = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.invokeCheckAttendanceStopped = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.invokeQuizStopped = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
-        this.invokeQuizStartMobile = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.invokeQuizQuestionReady = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.invokeQuizQuestionLoaded = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
         this.invokeQuizQuestionEnded = new __WEBPACK_IMPORTED_MODULE_2_rxjs__["Subject"]();
@@ -5977,15 +5976,6 @@ var SocketService = (function () {
         });
     };
     SocketService.prototype.stopEventOnQuizStopped = function () { this.socket.off('quizStopped'); };
-    //Teacher start quiz on mobile
-    // public emitEventOnQuizStartMobile(quizStartMobile){this.socket.emit('quizStartMobile', quizStartMobile);}
-    // public consumeEventOnQuizStartMobile(){
-    //   var self = this;
-    //   this.socket.on('quizStartMobile', function(event:any){
-    //     self.invokeQuizStartMobile.next(event);
-    //   });
-    // }
-    // public stopEventOnQuizStartMobile(){this.socket.off('quizStartMobile');}
     //Teacher end quiz normarlly
     SocketService.prototype.emitEventOnQuizEnded = function (quizEnded) { this.socket.emit('quizEnded', quizEnded); };
     SocketService.prototype.consumeEventOnQuizEnded = function () {
