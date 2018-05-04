@@ -12,6 +12,7 @@ var async = require("async");
 var nodemailer = require('nodemailer');
 var pg = require('pg');
 var format = require('pg-format');
+const requestAPI = require("./predefined-modules/requestAPI")
 const pool_postgres = new pg.Pool(_global.db_postgres);
 
 router.post('/list', function(req, res, next) {
