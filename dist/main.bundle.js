@@ -2446,8 +2446,8 @@ var _a, _b, _c, _d, _e, _f, _g;
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return AppConfig; });
 var AppConfig = (function () {
     function AppConfig() {
-        this.apiHost = "https://iteccyle8.herokuapp.com/api";
-        this.host = "https://iteccyle8.herokuapp.com";
+        this.apiHost = "http://localhost:3000/api";
+        this.host = "http://localhost:3000";
     }
     return AppConfig;
 }());

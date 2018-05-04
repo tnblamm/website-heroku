@@ -14,21 +14,21 @@ module.exports = {
     //      port:'5432',
     //      database: 'd3qdiqvkhud343'
     // },
-    db_postgres: {
-        host: 'ec2-54-204-39-46.compute-1.amazonaws.com',
-        user: 'aohdfjthljqwkc',
-        password: 'aef64cb0be238dd79240fa5b33a9bcedcbcd3857e06ab026f3aaa21ac29aa02a',
-        port:'5432',
-        database: 'd9r6sr1at4kv46'
-   },
     // db_postgres: {
-    //    host: 'localhost',
-    //    user: 'postgres',
-    //    password: '123',
-    //    port:'5432',
-    //    database: 'qldd'
+    //     host: 'ec2-54-204-39-46.compute-1.amazonaws.com',
+    //     user: 'aohdfjthljqwkc',
+    //     password: 'aef64cb0be238dd79240fa5b33a9bcedcbcd3857e06ab026f3aaa21ac29aa02a',
+    //     port:'5432',
+    //     database: 'd9r6sr1at4kv46'
     // },
-    host: 'iteccyle8.herokuapp.com',
+    db_postgres: {
+       host: 'localhost',
+       user: 'node_user',
+       password: 'node_password',
+       port:'5432',
+       database: 'qldd'
+    },
+    host: 'http://localhost:3000',
     email_setting: {
         host: 'smtp.office365.com', // Office 365 server
         port: 587, // secure SMTP

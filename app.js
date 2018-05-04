@@ -16,7 +16,7 @@ var swaggerDefinition = {
     version: '1.0.0',
     description: 'Demonstrating how to use DiemDanh API with your application',
   },
-  host: 'https://iteccyle8.herokuapp.com',
+  host: 'http://localhost:3000',
   basePath: '/',
 };
 
@@ -48,18 +48,18 @@ app.use('/authenticate', require('./api/authenticate'));
 app.use('/seed', require('./api/seed'));
 app.use('/api', require('./api/api'));
 
- const forceSSL = function() {
-   return function (req, res, next) {
-     if (req.headers['x-forwarded-proto'] !== 'https') {
-       return res.redirect(
-        ['https://', req.get('Host'), req.url].join('')
-       );
-     }
-     next();
-   }
- }
+const forceSSL = function() {
+  return function (req, res, next) {
+    if (req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(
+      ['https://', req.get('Host'), req.url].join('')
+      );
+    }
+    next();
+  }
+}
 
- app.use(forceSSL());
+//  app.use(forceSSL());
 
 
 //Xác định trang "public" cho client
