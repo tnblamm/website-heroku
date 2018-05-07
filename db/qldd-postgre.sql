@@ -172,7 +172,20 @@ CREATE TABLE students (
   status smallint DEFAULT '0',
   current_courses smallint DEFAULT '0',
   note varchar(50) DEFAULT NULL,
+  person_id VARCHAR(255) DEFAULT NULL
   PRIMARY KEY (id)
+);
+
+-- ----------------------------
+-- Table structure for student has faces
+-- ----------------------------
+DROP TABLE IF EXISTS student_has_faces;
+
+CREATE TABLE student_has_faces
+(
+    person_id character varying(255),
+    face_id character varying(255),
+    face_image character varying(255)
 );
 
 -- ----------------------------

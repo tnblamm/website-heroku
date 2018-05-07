@@ -77,7 +77,8 @@ router.post('/list', function(req, res, next) {
     });
 });
 
-router.post('/add', function(req, res, next) {
+// Add student
+router.post('/add', (req, res, next) => {
     if (req.body.program_id == undefined || req.body.program_id == 0) {
         _global.sendError(res, null, "Program is required");
         return;
@@ -118,26 +119,30 @@ router.post('/add', function(req, res, next) {
     var new_email = req.body.email;
     var new_phone = req.body.phone;
     var new_note = req.body.note;
-    pool_postgres.connect(function(error, connection, done) {
-        if (error) {
-            _global.sendError(res, error.message);
-            done();
-            return console.log(error);
+    var new_person_id;
+    var dataAPI = {
+        baseUrl: 'https://westcentralus.api.cognitive.microsoft.com',
+        uri: `/face/v1.0/persongroups/${_global.largePersonGroup}/persons`,
+        headers: {
+            'Content-Type':'application/json',
+            'Ocp-Apim-Subscription-Key':`${_global.faceApiKey}`
+        },
+        method: 'POST',
+        body: {
+            "name": new_code,
+            "userData": new_first_name
         }
-
-        connection.query(format(`SELECT stud_id FROM students WHERE stud_id = %L LIMIT 1`, new_code), function(error, result, fields) {
+    }
+    function addStudent(personId){
+        new_person_id = personId;
+        pool_postgres.connect(function(error, connection, done) {
             if (error) {
                 _global.sendError(res, error.message);
                 done();
                 return console.log(error);
             }
-            //check email exist
-            if (result.rowCount > 0) {
-                _global.sendError(res, null, "Student code already existed");
-                done();
-                return console.log("Student code already existed");
-            }
-            connection.query(format(`SELECT email FROM users WHERE email = %L LIMIT 1`, new_email), function(error, result, fields) {
+    
+            connection.query(format(`SELECT stud_id FROM students WHERE stud_id = %L LIMIT 1`, new_code), function(error, result, fields) {
                 if (error) {
                     _global.sendError(res, error.message);
                     done();
@@ -145,92 +150,119 @@ router.post('/add', function(req, res, next) {
                 }
                 //check email exist
                 if (result.rowCount > 0) {
-                    _global.sendError(res, "Email already existed");
+                    _global.sendError(res, null, "Student code already existed");
                     done();
-                    return console.log("Email already existed");
+                    return console.log("Student code already existed");
                 }
-                //new data to users table
-                var new_password = new_email.split('@')[0];
-                var new_user = [[
-                    new_first_name,
-                    new_last_name,
-                    new_email,
-                    new_phone,
-                    bcrypt.hashSync(new_password, 10),
-                    _global.role.student
-                ]];
-                var new_student = [];
-                async.series([
-                    //Start transaction
-                    function(callback) {
-                        connection.query('BEGIN', (error) => {
-                            if (error) callback(error);
-                            else callback();
-                        });
-                    },
-                    //add data to user table
-                    function(callback) {
-                        connection.query(format('INSERT INTO users (first_name,last_name,email,phone,password,role_id) VALUES %L RETURNING id', new_user), function(error, result, fields) {
-                            if (error) {
-                                callback(error);
-                            }else{
-                                new_student = [[
-                                    result.rows[0].id,
-                                    new_code,
-                                    new_class_id,
-                                    new_note
-                                ]];
-                                callback();
-                            }
-                        });
-                    },
-                    //insert student
-                    function(callback) {
-                        connection.query(format('INSERT INTO students (id,stud_id,class_id,note) VALUES %L', new_student), function(error, result, fields) {
-                            if (error) {
-                                callback(error);
-                            }else{
-                                callback();
-                            }
-                        });
-                    },
-                    //Commit transaction
-                    function(callback) {
-                        connection.query('COMMIT', (error) => {
-                            if (error) callback(error);
-                            else callback();
-                        });
-                    },
-                ], function(error) {
+                connection.query(format(`SELECT email FROM users WHERE email = %L LIMIT 1`, new_email), function(error, result, fields) {
                     if (error) {
                         _global.sendError(res, error.message);
-                        connection.query('ROLLBACK', (error) => {
-                            if (error) return console.log(error);
-                        });
                         done();
                         return console.log(error);
-                    } else {
-                        var token = jwt.sign({ email: new_email }, _global.jwt_secret_key, { expiresIn: _global.jwt_register_expire_time });
-                        var link = _global.host + '/register;token=' + token;
-                        _global.sendMail(
-                            '"Giáo vụ"',
-                            new_email,
-                            'Register your account',
-                            'Hi,'+ new_first_name + '\r\n' +
-                            'Your account has been created.To setup your account for the first time, please go to the following web address: \r\n\r\n' +
-                            link +
-                            '\r\n(This link is valid for 7 days from the time you received this email)\r\n\r\n' +
-                            'If you need help, please contact the site administrator,\r\n' +
-                            'Admin User \r\n\r\n' +
-                            'admin@fit.hcmus.edu.vn'
-                        );
-                        console.log('success adding student!');
-                        res.send({ result: 'success', message: 'Student Added Successfully' });
-                        done();
                     }
+                    //check email exist
+                    if (result.rowCount > 0) {
+                        _global.sendError(res, "Email already existed");
+                        done();
+                        return console.log("Email already existed");
+                    }
+                    //new data to users table
+                    var new_password = new_email.split('@')[0];
+                    var new_user = [[
+                        new_first_name,
+                        new_last_name,
+                        new_email,
+                        new_phone,
+                        bcrypt.hashSync(new_password, 10),
+                        _global.role.student
+                    ]];
+                    var new_student = [];
+                    async.series([
+                        //Start transaction
+                        function(callback) {
+                            connection.query('BEGIN', (error) => {
+                                if (error) callback(error);
+                                else callback();
+                            });
+                        },
+                        //add data to user table
+                        function(callback) {
+                            connection.query(format('INSERT INTO users (first_name,last_name,email,phone,password,role_id) VALUES %L RETURNING id', new_user), function(error, result, fields) {
+                                if (error) {
+                                    callback(error);
+                                }else{
+                                    new_student = [[
+                                        result.rows[0].id,
+                                        new_code,
+                                        new_class_id,
+                                        new_note,
+                                        new_person_id
+                                    ]];
+                                    callback();
+                                }
+                            });
+                        },
+                        //insert student
+                        function(callback) {
+                            connection.query(format('INSERT INTO students (id,stud_id,class_id,note,person_id) VALUES %L', new_student), function(error, result, fields) {
+                                if (error) {
+                                    callback(error);
+                                }else{
+                                    callback();
+                                }
+                            });
+                        },
+                        //Commit transaction
+                        function(callback) {
+                            connection.query('COMMIT', (error) => {
+                                if (error) callback(error);
+                                else callback();
+                            });
+                        },
+                    ], function(error) {
+                        if (error) {
+                            _global.sendError(res, error.message);
+                            connection.query('ROLLBACK', (error) => {
+                                if (error) return console.log(error);
+                            });
+                            done();
+                            return console.log(error);
+                        } else {
+                            var token = jwt.sign({ email: new_email }, _global.jwt_secret_key, { expiresIn: _global.jwt_register_expire_time });
+                            var link = _global.host + '/register;token=' + token;
+                            _global.sendMail(
+                                '"Giáo vụ"',
+                                new_email,
+                                'Register your account',
+                                'Hi,'+ new_first_name + '\r\n' +
+                                'Your account has been created.To setup your account for the first time, please go to the following web address: \r\n\r\n' +
+                                link +
+                                '\r\n(This link is valid for 7 days from the time you received this email)\r\n\r\n' +
+                                'If you need help, please contact the site administrator,\r\n' +
+                                'Admin User \r\n\r\n' +
+                                'admin@fit.hcmus.edu.vn'
+                            );
+                            console.log('success adding student!');
+                            res.send({ result: 'success', message: 'Student Added Successfully' });
+                            done();
+                        }
+                    });
                 });
             });
         });
+    }
+    requestAPI(dataAPI, function(error, result) {
+        if (error) {
+            _global.sendError(res, null, "Unknown Error");
+            return;
+        }
+        var person_id = result['personId'];
+        if (person_id == undefined || person_id == '') {
+            _global.sendError(res, null, "Cannot get Person Id");
+            return;
+        } else {
+            addStudent(person_id);
+        }
     });
 });
 
@@ -242,7 +274,7 @@ router.get('/detail/:id', function(req, res, next) {
             done();
             return console.log("Can't connect to database");
         }
-        connection.query(format(`SELECT users.*,students.stud_id AS code, students.status,classes.id AS class_id ,classes.name AS class_name
+        connection.query(format(`SELECT users.*,students.stud_id AS code, students.person_id,students.status,classes.id AS class_id ,classes.name AS class_name
             FROM users,students,classes
             WHERE users.id = %L AND users.id = students.id AND students.class_id = classes.id  LIMIT 1`, id), function(error, result, fields) {
             if (error) {
@@ -371,6 +403,103 @@ router.put('/update', function(req, res, next) {
                 done();
             }
         });
+    });
+});
+
+// Upload Face to student
+router.post('/uploadFace', function(req, res, next) {
+    if (req.body.person_id == undefined || req.body.person_id == '') {
+        _global.sendError(res, null, "PersonId is required");
+        return;
+    }
+    if (req.body.face_image == undefined || req.body.face_image == '') {
+        _global.sendError(res, null, "Face Image URL is required");
+        return;
+    }
+    
+    var person_id = req.body.person_id;
+    var face_image = req.body.face_image;
+
+    var dataAPI = {
+        baseUrl: 'https://westcentralus.api.cognitive.microsoft.com',
+        uri: `/face/v1.0/persongroups/${_global.largePersonGroup}/persons/${person_id}/persistedFaces`,
+        headers: {
+            'Content-Type':'application/json',
+            'Ocp-Apim-Subscription-Key':`${_global.faceApiKey}`
+        },
+        method: 'POST',
+        body: {
+            "url": face_image
+        }
+    }   
+    function addFace(face_id){
+        // console.log('HERE');
+        pool_postgres.connect(function(error, connection, done) {
+            if (error) {
+                _global.sendError(res, error.message);
+                done();
+                return console.log(error);
+            }
+    
+            var new_student_has_face = [[
+                person_id,
+                face_id,
+                face_image,
+            ]];
+    
+            async.series([
+                //Start transaction
+                function(callback) {
+                    connection.query('BEGIN', (error) => {
+                        if (error) callback(error);
+                        else callback();
+                    });
+                },
+                //add data to student_has_faces table
+                function(callback) {
+                    connection.query(format('INSERT INTO student_has_faces (person_id, face_id, face_image) VALUES %L', new_student_has_face), function(error, result, fields) {
+                        if (error) {
+                            callback(error);
+                        }else{
+                            callback();
+                        }
+                    });
+                },
+                //Commit transaction
+                function(callback) {
+                    connection.query('COMMIT', (error) => {
+                        if (error) callback(error);
+                        else callback();
+                    });
+                },
+            ], function(error) {
+                if (error) {
+                    _global.sendError(res, error.message);
+                    connection.query('ROLLBACK', (error) => {
+                        if (error) return console.log(error);
+                    });
+                    done(error);
+                    return console.log(error);
+                } else {
+                    console.log('Success adding face to student!---------------------------------------');
+                    res.send({ result: 'success', message: 'Face Added Successfully' });
+                    done();
+                }
+            });
+        });
+    }
+    requestAPI(dataAPI, function(error, result) {
+        if (error) {
+            _global.sendError(res, null, "Unknown Error");
+            return;
+        }
+        var face_id = result['persistedFaceId'];
+        if (face_id == undefined || face_id == '') {
+            _global.sendError(res, null, "Cannot get Face Id");
+            return;
+        } else {
+            addFace(face_id);
+        }
     });
 });
 
