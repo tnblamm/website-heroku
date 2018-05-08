@@ -78,7 +78,8 @@ router.post('/list', function(req, res, next) {
 });
 
 // Add student
-router.post('/add', (req, res, next) => {
+router.post('/add', function (req, res, next) {
+    console.log('HERE');
     if (req.body.program_id == undefined || req.body.program_id == 0) {
         _global.sendError(res, null, "Program is required");
         return;
