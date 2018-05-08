@@ -122,7 +122,7 @@ router.post('/add', (req, res, next) => {
     var new_person_id;
     var dataAPI = {
         baseUrl: 'https://westcentralus.api.cognitive.microsoft.com',
-        uri: `/face/v1.0/persongroups/${_global.largePersonGroup}/persons`,
+        uri: `/face/v1.0/largepersongroups/${_global.largePersonGroup}/persons`,
         headers: {
             'Content-Type':'application/json',
             'Ocp-Apim-Subscription-Key':`${_global.faceApiKey}`
@@ -422,7 +422,7 @@ router.post('/uploadFace', function(req, res, next) {
 
     var dataAPI = {
         baseUrl: 'https://westcentralus.api.cognitive.microsoft.com',
-        uri: `/face/v1.0/persongroups/${_global.largePersonGroup}/persons/${person_id}/persistedFaces`,
+        uri: `/face/v1.0/largepersongroups/${_global.largePersonGroup}/persons/${person_id}/persistedfaces`,
         headers: {
             'Content-Type':'application/json',
             'Ocp-Apim-Subscription-Key':`${_global.faceApiKey}`
