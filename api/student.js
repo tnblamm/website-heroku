@@ -10,6 +10,7 @@ var bcrypt = require('bcrypt');
 var nodemailer = require('nodemailer');
 var pg = require('pg');
 var format = require('pg-format');
+var requestAPI = require("./util/requestAPI")
 const pool_postgres = new pg.Pool(_global.db_postgres);
 
 router.post('/list', function(req, res, next) {
