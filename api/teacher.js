@@ -457,6 +457,7 @@ router.post('/verifyFace', function(req, res, next) {
 
     requestAPI(dataAPI, function(error, result) {
         if (error) {
+            console.log('error', JSON.stringify(error));
             _global.sendError(res, null, "Unknown Error");
             return;
         }
