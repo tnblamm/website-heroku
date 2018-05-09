@@ -412,7 +412,7 @@ router.post('/import', function(req, res, next) {
 
 // Face Verification - Face to Person
 router.post('/verifyFace', function(req, res, next) {
-    // console.log("Verifying Face")
+    console.log("Verifying Face");
     if (req.body.faceId == undefined || req.body.faceId == '') {
         _global.sendError(res, null, "Face ID is required");
         return;
