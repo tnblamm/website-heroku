@@ -517,6 +517,7 @@ router.post('/import', function(req, res, next) {
     var class_name = req.body.class_name;
     var student_list = req.body.student_list;
     var new_student_list = [];
+
     pool_postgres.connect(function(error, connection, done) {
         if (error) {
             _global.sendError(res, error.message);
@@ -576,48 +577,80 @@ router.post('/import', function(req, res, next) {
             //Insert student into class
             function(callback) {
                 async.each(student_list, function(student, callback) {
-                    connection.query(format(`SELECT id FROM students WHERE stud_id = %L LIMIT 1`, student.stud_id), function(error, result, fields) {
-                        if (error) {
-                            console.log(error.message + ' at get student_id from datbase (file)');
-                            callback(error);
-                        } else {
-                            if (result.rowCount == 0) {
-                                //new student to system
-                                var new_user = [[
-                                    _global.getFirstName(student.name),
-                                    _global.getLastName(student.name),
-                                    _global.getEmailStudentApcs(student.name),
-                                    student.phone,
-                                    _global.role.student,
-                                    bcrypt.hashSync(student.stud_id.toString(), 10),
-                                ]];
-                                connection.query(format(`INSERT INTO users (first_name,last_name,email,phone,role_id,password) VALUES %L RETURNING id`, new_user), function(error, result, fields) {
-                                    if (error) {
-                                        callback(error);
-                                    } else {
-                                        var student_id = result.rows[0].id;
-                                        var new_student = [[
-                                            student_id,
-                                            student.stud_id,
-                                            class_id,
-                                        ]];
-                                        connection.query(format(`INSERT INTO students (id,stud_id,class_id) VALUES %L`, new_student), function(error, result, fields) {
-                                            if (error) {
-                                                callback(error);
-                                            } else {
-                                                new_student_list.push({
-                                                    name : _global.getLastName(student.name),
-                                                    email : _global.getEmailStudentApcs(student.name)
-                                                });
-                                                callback();
-                                            }
-                                        });
-                                    }
-                                });
+                    var new_code = student.stud_id;
+                    var new_first_name = _global.getFirstName(student.name);
+                    var dataAPI = {
+                        baseUrl: 'https://westcentralus.api.cognitive.microsoft.com',
+                        uri: `/face/v1.0/largepersongroups/${_global.largePersonGroup}/persons`,
+                        headers: {
+                            'Content-Type':'application/json',
+                            'Ocp-Apim-Subscription-Key':`${_global.faceApiKey}`
+                        },
+                        method: 'POST',
+                        body: {
+                            "name": new_code,
+                            "userData": new_first_name
+                        }
+                    }
+                    function addStudent(personId){
+                        var new_person_id = personId;
+                        connection.query(format(`SELECT id FROM students WHERE stud_id = %L LIMIT 1`, student.stud_id), function(error, result, fields) {
+                            if (error) {
+                                console.log(error.message + ' at get student_id from datbase (file)');
+                                callback(error);
                             } else {
-                                //old student => ignore
-                                callback();
+                                if (result.rowCount == 0) {
+                                    //new student to system
+                                    var new_user = [[
+                                        _global.getFirstName(student.name),
+                                        _global.getLastName(student.name),
+                                        _global.getEmailStudentApcs(student.name),
+                                        student.phone,
+                                        _global.role.student,
+                                        bcrypt.hashSync(student.stud_id.toString(), 10),
+                                    ]];
+                                    connection.query(format(`INSERT INTO users (first_name,last_name,email,phone,role_id,password) VALUES %L RETURNING id`, new_user), function(error, result, fields) {
+                                        if (error) {
+                                            callback(error);
+                                        } else {
+                                            var student_id = result.rows[0].id;
+                                            var new_student = [[
+                                                student_id,
+                                                student.stud_id,
+                                                class_id,
+                                                new_person_id
+                                            ]];
+                                            connection.query(format(`INSERT INTO students (id,stud_id,class_id, person_id) VALUES %L`, new_student), function(error, result, fields) {
+                                                if (error) {
+                                                    callback(error);
+                                                } else {
+                                                    new_student_list.push({
+                                                        name : _global.getLastName(student.name),
+                                                        email : _global.getEmailStudentApcs(student.name)
+                                                    });
+                                                    callback();
+                                                }
+                                            });
+                                        }
+                                    });
+                                } else {
+                                    //old student => ignore
+                                    callback();
+                                }
                             }
+                        });
+                    }
+                    requestAPI(dataAPI, function(error, result) {
+                        if (error) {
+                            _global.sendError(res, null, "Unknown Error");
+                            return;
+                        }
+                        var person_id = result['personId'];
+                        if (person_id == undefined || person_id == '') {
+                            _global.sendError(res, null, "Cannot get Person Id");
+                            return;
+                        } else {
+                            addStudent(person_id);
                         }
                     });
                 }, function(error) {
@@ -674,7 +707,7 @@ router.post('/import', function(req, res, next) {
                 });
             }
         });
-    });
+    });  
 });
 
 router.post('/export', function(req, res, next) {
