@@ -425,7 +425,7 @@ router.post('/verifyFace', function(req, res, next) {
         _global.sendError(res, null, "Large Person Group ID is required");
         return;
     }
-
+    console.log(111111);
     var faceId = req.body.faceId;
     var personId = req.body.personId;
 
@@ -456,6 +456,7 @@ router.post('/verifyFace', function(req, res, next) {
     }
 
     requestAPI(dataAPI, function(error, result) {
+        console.log(55555);
         if (error) {
             console.log('error', JSON.stringify(error));
             _global.sendError(res, null, "Unknown Error");
