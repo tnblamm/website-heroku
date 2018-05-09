@@ -412,7 +412,7 @@ router.post('/import', function(req, res, next) {
 
 // Face Verification - Face to Person
 router.post('/verifyFace', function(req, res, next) {
-    console.log("Verifying Face")
+    // console.log("Verifying Face")
     if (req.body.faceId == undefined || req.body.faceId == '') {
         _global.sendError(res, null, "Face ID is required");
         return;
@@ -434,7 +434,7 @@ router.post('/verifyFace', function(req, res, next) {
         uri: '/face/v1.0/verify',
         headers: {
             'Content-Type':'application/json',
-            'Ocp-Apim-Subscription-Key':'18db52d47bc5483f92d687a957c40c98'
+            'Ocp-Apim-Subscription-Key':`${_global.faceApiKey}`
         },
         method: 'POST',
         body: {
@@ -462,7 +462,7 @@ router.post('/verifyFace', function(req, res, next) {
         }
         var isIdentical = result['isIdentical'];
         var confidence = result['confidence'];
-        if (isIdentical == undefined || isIdentical == '') {
+        if (isIdentical == undefined) {
             _global.sendError(res, null, "Cannot get is Identical");
             return;
         } 
