@@ -178,6 +178,10 @@ module.exports = {
         return last_name;
     },
 
+    getEmailStudentApcs: function(stud_id){
+        return `${stud_id}@student.hcmus.edu.vn`
+    },
+
     getProgramCodeFromClassName: function(class_name) {
         var program_code = '';
         for (var i = 0; i < class_name.length; i++) {
