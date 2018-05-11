@@ -116,7 +116,8 @@ export class StudentsComponent implements OnInit {
                 this.new_classes.push(this.classes[i]);
             }
         }
-        this.newClass = this.new_classes[0].id;
+        this.newClass = this.new_classes.length > 0 ? this.new_classes[0].id : 0;
+        
     }
 
     @ViewChild(ImportModalComponent)
