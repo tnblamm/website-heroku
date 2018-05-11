@@ -418,93 +418,69 @@ router.post('/uploadFace', function(req, res, next) {
         _global.sendError(res, null, "Face Image URL is required");
         return;
     }
+    if (req.body.face_id == undefined || req.body.face_id == '') {
+        _global.sendError(res, null, "Face ID is required");
+        return;
+    }
     
     var person_id = req.body.person_id;
     var face_image = req.body.face_image;
-
-    var dataAPI = {
-        baseUrl: 'https://westcentralus.api.cognitive.microsoft.com',
-        uri: `/face/v1.0/largepersongroups/${_global.largePersonGroup}/persons/${person_id}/persistedfaces`,
-        headers: {
-            'Content-Type':'application/json',
-            'Ocp-Apim-Subscription-Key':`${_global.faceApiKey}`
-        },
-        method: 'POST',
-        body: {
-            "url": face_image
+    var face_id = req.body.face_id;
+ 
+    pool_postgres.connect(function(error, connection, done) {
+        if (error) {
+            _global.sendError(res, error.message);
+            done();
+            return console.log(error);
         }
-    }   
-    function addFace(face_id){
-        // console.log('HERE');
-        pool_postgres.connect(function(error, connection, done) {
+
+        var new_student_has_face = [[
+            person_id,
+            face_id,
+            face_image,
+        ]];
+
+        async.series([
+            //Start transaction
+            function(callback) {
+                connection.query('BEGIN', (error) => {
+                    if (error) callback(error);
+                    else callback();
+                });
+            },
+            //add data to student_has_faces table
+            function(callback) {
+                connection.query(format('INSERT INTO student_has_faces (person_id, face_id, face_image) VALUES %L', new_student_has_face), function(error, result, fields) {
+                    if (error) {
+                        callback(error);
+                    }else{
+                        callback();
+                    }
+                });
+            },
+            //Commit transaction
+            function(callback) {
+                connection.query('COMMIT', (error) => {
+                    if (error) callback(error);
+                    else callback();
+                });
+            },
+        ], function(error) {
             if (error) {
                 _global.sendError(res, error.message);
-                done();
+                connection.query('ROLLBACK', (error) => {
+                    if (error) return console.log(error);
+                });
+                done(error);
                 return console.log(error);
+            } else {
+                console.log('Success adding face to student!---------------------------------------');
+                res.send({ result: 'success', message: 'Face Added Successfully' });
+                done();
             }
-    
-            var new_student_has_face = [[
-                person_id,
-                face_id,
-                face_image,
-            ]];
-    
-            async.series([
-                //Start transaction
-                function(callback) {
-                    connection.query('BEGIN', (error) => {
-                        if (error) callback(error);
-                        else callback();
-                    });
-                },
-                //add data to student_has_faces table
-                function(callback) {
-                    connection.query(format('INSERT INTO student_has_faces (person_id, face_id, face_image) VALUES %L', new_student_has_face), function(error, result, fields) {
-                        if (error) {
-                            callback(error);
-                        }else{
-                            callback();
-                        }
-                    });
-                },
-                //Commit transaction
-                function(callback) {
-                    connection.query('COMMIT', (error) => {
-                        if (error) callback(error);
-                        else callback();
-                    });
-                },
-            ], function(error) {
-                if (error) {
-                    _global.sendError(res, error.message);
-                    connection.query('ROLLBACK', (error) => {
-                        if (error) return console.log(error);
-                    });
-                    done(error);
-                    return console.log(error);
-                } else {
-                    console.log('Success adding face to student!---------------------------------------');
-                    res.send({ result: 'success', message: 'Face Added Successfully' });
-                    done();
-                }
-            });
         });
-    }
-    requestAPI(dataAPI, function(error, result) {
-        if (error) {
-            _global.sendError(res, null, "Unknown Error");
-            return;
-        }
-        var face_id = result['persistedFaceId'];
-        if (face_id == undefined || face_id == '') {
-            _global.sendError(res, null, "Cannot get Face Id");
-            return;
-        } else {
-            addFace(face_id);
-        }
     });
 });
-
 router.post('/import', function(req, res, next) {
     if (req.body.class_name == undefined || req.body.class_name == '') {
         _global.sendError(res, null, "Class name is required");
